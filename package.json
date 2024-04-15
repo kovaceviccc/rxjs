@@ -5,16 +5,18 @@
   "main": "index.js",
   "scripts": {
     "build": "webpack --watch --config webpack.config.js",
-    "start": "lite-server"
+    "start": "webpack --watch --config webpack.config.js && lite-server"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
     "@types/node": "^20.11.19",
+    "dotenv": "^16.4.5",
     "rxjs": "^7.8.1"
   },
   "devDependencies": {
+    "lite-server": "^2.6.1",
     "ts-loader": "^9.5.1",
     "typescript": "^5.3.3",
     "webpack-cli": "^5.1.4"

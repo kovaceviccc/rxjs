@@ -1,7 +1,8 @@
-import { debounceTime, fromEvent, map, startWith, switchMap } from "rxjs";
+import { debounceTime, fromEvent, map, merge, mergeAll, startWith, switchMap } from "rxjs";
 import { BlogService } from "./services/blog-service";
 import { Blog } from "./models/blog";
 import { QueryFilter } from "./models/query-filter";
+import { QueryFilterAttributeEnum } from "./models/query-filter-attribute-enum";
 
 let page: number = 1;
 let pageSize: number = 5;
@@ -21,71 +22,28 @@ function createFilteringMenu() {
   filterCard.style.display = "flex";
 
   const authorNameInput = document.createElement("input");
+  authorNameInput.id = QueryFilterAttributeEnum.Author;
   authorNameInput.placeholder = "Author Name";
   filterCard.appendChild(authorNameInput);
 
   const blogTitleInput = document.createElement("input");
+  blogTitleInput.id = QueryFilterAttributeEnum.Title;
   blogTitleInput.placeholder = "Blog Title";
   filterCard.appendChild(blogTitleInput);
 
   const blogContentInput = document.createElement("input");
+  blogContentInput.id = QueryFilterAttributeEnum.Content;
   blogContentInput.placeholder = "Blog Content";
   filterCard.appendChild(blogContentInput);
-
-  const dateCreatedInput = document.createElement("input");
-  dateCreatedInput.type = "date";
-  filterCard.appendChild(dateCreatedInput);
 
   filterSection.appendChild(filterCard);
   document.body.insertBefore(filterSection, document.body.firstChild);
 
-  fromEvent(authorNameInput, "input")
-    .pipe(
-      debounceTime(500),
-      map((event) => (event.target as HTMLInputElement).value),
-      switchMap((value) => {
-        page = 1;
-        queryFilter.author = value;
-        return blogService.getBlogsPage(page, pageSize, queryFilter);
-      })
-    )
-    .subscribe(updateBlogList);
-
-  fromEvent(blogTitleInput, "input")
-    .pipe(
-      debounceTime(500),
-      map((event) => (event.target as HTMLInputElement).value),
-      switchMap((value) => {
-        page = 1;
-        queryFilter.title = value;
-        return blogService.getBlogsPage(page, pageSize, queryFilter);
-      })
-    )
-    .subscribe(updateBlogList);
-
-  fromEvent(blogContentInput, "input")
-    .pipe(
-      debounceTime(500),
-      map((event) => (event.target as HTMLInputElement).value),
-      switchMap((value) => {
-        page = 1;
-        queryFilter.content = value;
-        return blogService.getBlogsPage(page, pageSize, queryFilter);
-      })
-    )
-    .subscribe(updateBlogList);
-
-  fromEvent(dateCreatedInput, "change")
-    .pipe(
-      debounceTime(500),
-      map((event) => new Date((event.target as HTMLInputElement).value)),
-      switchMap((value) => {
-        page = 1;
-        queryFilter.createdAt = value;
-        return blogService.getBlogsPage(page, pageSize, queryFilter);
-      })
-    )
-    .subscribe(updateBlogList);
+  merge(
+    createInputStream(authorNameInput, "input", (value) => value),
+    createInputStream(blogTitleInput, "input", (value) => value),
+    createInputStream(blogContentInput, "input", (value) => value)
+  ).subscribe(updateBlogList);
 }
 
 function updateBlogList(blogs: Blog[], updateBlogList: boolean = false) {
@@ -132,3 +90,24 @@ fromEvent(window, "scroll")
   .subscribe((blogs: Blog[]) => {
     updateBlogList(blogs, true);
   });
+
+
+function createInputStream(inputElement: HTMLInputElement, eventType: string, mapFunction: (value: string) => any)
+{
+  return fromEvent(inputElement, eventType)
+    .pipe(
+      debounceTime(500),
+      map((event) => mapFunction((event.target as HTMLInputElement).value)),
+      switchMap((value) => {
+        page = 1;
+        mapFilterFromInput(inputElement, value);
+        return blogService.getBlogsPage(page, pageSize, queryFilter);
+      })
+    );
+}
+
+
+function mapFilterFromInput(inputElement: HTMLInputElement, value: string)
+{
+  queryFilter[inputElement.id] = value;
+}
