@@ -1,6 +1,7 @@
 import { Observable, delay, from, map, of, switchMap } from "rxjs";
 import { Blog } from "../models/blog";
 import { QueryFilter } from "../models/query-filter";
+import { BASE_API_URL } from "../../consts";
 
 export class BlogService {
   constructor() {}
@@ -11,7 +12,7 @@ export class BlogService {
     filter: QueryFilter
   ): Observable<Blog[]> {
     console.log(filter);
-    return from(fetch("http://localhost:3005/blogs")).pipe(
+    return from(fetch(BASE_API_URL+"/blogs")).pipe(
       switchMap((response) => response.json()),
       map((data: Blog[]) => {
         let filteredBlogs = data;

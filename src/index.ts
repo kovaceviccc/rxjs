@@ -100,14 +100,8 @@ function createInputStream(inputElement: HTMLInputElement, eventType: string, ma
       map((event) => mapFunction((event.target as HTMLInputElement).value)),
       switchMap((value) => {
         page = 1;
-        mapFilterFromInput(inputElement, value);
+        queryFilter[inputElement.id] = value;
         return blogService.getBlogsPage(page, pageSize, queryFilter);
       })
     );
-}
-
-
-function mapFilterFromInput(inputElement: HTMLInputElement, value: string)
-{
-  queryFilter[inputElement.id] = value;
 }
